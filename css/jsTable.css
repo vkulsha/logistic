@@ -1,0 +1,39 @@
+table.jsTable {
+	color: #000;
+	font-family: Arial;
+	font-size: 12px;
+	
+}
+
+
+table.jsTable td { 
+	border-right: 1px solid #ccc;
+	border-top: 1px solid #ddd;
+	padding: 2px 4px 3px 4px;
+}
+
+table.jsTable th { 
+	border-left: 1px solid #eee;
+	border-right: 1px solid #aaa;
+	padding: 2px 3px 3px 4px;
+}
+
+
+table.jsTable, table.jsTable td, table.jsTable tbody tr {
+	background-color: #fffff0;
+}
+
+table.jsTable tfoot, table.jsTable thead tr, table.jsTable thead, table.jsTable th { 
+	background-color: #e4dac5;/*#f0f0e0;*/
+}
+
+
+.jsTableSelectedCell {
+	background-color: #ffe48a;
+	
+}
+
+.jsTableSelectedRow {
+	background-color: #fff7d9;
+	
+}

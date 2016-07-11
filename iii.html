@@ -1,0 +1,553 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>III</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	
+	<script src="js/jquery-2.2.0.min.js"></script>
+	<script src="js/uService.js"></script>
+	<script src="js/objectlink.js"></script></head>
+<body>
+<div id='terminalRow' style='position:absolute; top:100; left:300' hidden><textarea id='terminal' cols=100 rows=40></textarea></div>
+
+<table id="tbData" width="100%">
+	<tr>
+		<td class="highlight">
+			<table>
+				<tr><td>
+					<button id='bHome'>/</button>
+					<button id='bCO'>cO</button>
+					<button id='bCL'>cL</button>
+					<button id='bEO'>eO</button>
+					<button id='bEL'>eL</button>
+					<input type='checkbox' id='chAdd2query'/>
+					<!--<input type='checkbox' id='chQueryLinkParent'/>-->
+					<button id='bTable'>t</button>
+					<button id='bTable2'>T</button>
+					<!--<button id='bFontSizePlus'>+</button>-->
+					<button id='bOrderBy'>n</button>
+					<button id='bEdit'>[..]</button>
+					<button id='bAddCard'>+</button>
+					<br><label id="lCount" style='font-size:10px'>0</label>
+				</td></tr>
+				<tr><td>
+					<input type='checkbox' id='link'/>
+					<label id='stat' style='font-size:10px'>...</label>
+				</td></tr>
+				<tr><td><table id='edit' width='100%' border=0 hidden><tr>
+					<td width='100%'><textarea id='txt' rows=2 style='width:100%'></textarea></td>
+					<td><button id='bSave'>ok</button></td>
+					<td><button id='bFile' onclick='document.getElementById("selectFile").hidden = !document.getElementById("selectFile").hidden'>></button></td>
+					<td id='selectFile' hidden><input id='files' name='files[]' type='file' multiple /></td>
+				</tr></table></td></tr>
+			</table>
+		</td>
+	</tr>
+	<tr><td><table><tr>
+		<td valign='top'><table id='lQuery'></table></td>
+		<td valign='top' id='tQuery' hidden></td>
+	</tr></table></td></tr>
+	<tr><td><div style='overflow-y:auto' id='divContainer'><table id='dataContainer' cellpadding=1 style='width:100%'></table></div></td></tr>
+</table>
+
+<script>
+	var classes_ = objectlink.gOrm("gAnd",[[1],"n,id"]);
+	var classes = hash4arr(classes_);
+	var fs = 12;
+	var oid1 = "";
+	var oid2 = "";
+	var n1 = "";
+	var n2 = "";
+	var oid = location.hash ? location.hash.split("#")[1].slice(1) : "1.class";
+	var arrQuery = [[],[],[],false,[]];
+	var stat = document.getElementById("stat");
+	var txt = document.getElementById("txt");
+	var bSave = document.getElementById("bSave");
+	var link = document.getElementById("link");
+	var lCount = document.getElementById("lCount");
+	var dom = document.getElementById("dataContainer");
+	var divContainer = document.getElementById("divContainer");
+	var bEdit = document.getElementById("bEdit");
+	var edit =  document.getElementById("edit");
+	var bTable = document.getElementById("bTable");
+	var bTable2 = document.getElementById("bTable2");
+	var tQuery = document.getElementById("tQuery");
+	var lQuery = document.getElementById("lQuery");
+	var chAdd2query = document.getElementById("chAdd2query");
+	var chQueryLinkParent = document.getElementById("chQueryLinkParent");
+	var files = document.getElementById("files");
+	var terminal = document.getElementById("terminal");
+	var terminalRow = document.getElementById("terminalRow");
+	var bAddCard = document.getElementById("bAddCard");
+	var isFile = false;
+	var isClass = false;
+	var arrChbxs = [];
+	var countClass = 0;
+	var countObjects = 0;
+	var countAll = 0;
+
+	var ORDER = " order by c desc, o1 desc, t desc ";
+	var order = ORDER;
+	var query = "select * from ( \n"+
+			"	select distinct link.o1, object.n, link.o2, case when class.o2 is not null then 'Класс' end c, link.t from ( \n"+
+			"		select o1, o2, 'child' t from link union all select o2, o1, 'parent' from link \n"+
+			"	)link \n"+
+			"	join object on object.id = link.o1 \n"+
+			"	left join link class on class.o1 = link.o1 and class.o2 in (select id from object where n='Класс') \n"+
+			")xxx where 1=1 and (o1 <> o2 or (o1 = o2 and t='parent')) \n";
+	
+	divContainer.style.height = windowHeight()-105+"px";
+	
+	if (location.hash == "#."+oid) {
+		hashchange();
+	} else {
+		location.href = "#."+oid;
+	}
+	
+	function load(where_, order_){
+		//var result = orm(query+where_+" "+order_, "all2array");
+		var result = getOrmObject({columns:["1","2","3","4","5"],data:objectlink.gOrm("iii", [where_, order_])}, "all2array");
+		var data = result;
+		if (!data.length) return false;
+		
+		dom.innerHTML = "";
+		countClass = 0;
+		countObjects = 0;
+		countAll = data.length;
+		
+		for (var i=0; i < data.length; i++){
+			var cell = document.createElement("BUTTON");
+			cell.innerHTML = data[i][1];
+			cell.id = data[i][0];
+			cell.isClass = data[i][3];
+			cell.style.fontSize = fs+"px";
+			cell.style.width = "100%";
+			cell.style.textAlign = "left";
+			cell.style.fontWeight = data[i][3] ? "bold" : "";
+			cell.style.color = data[i][4] == 'parent' ? "#aa0000" : "#000";
+			if (data[i][3]) { countClass++; } else { countObjects++; };
+			isFile = isFile || (data[i][1] == 'Файлы');
+
+			cell.onclick = function(){
+				location.href = "#."+this.id+(this.isClass ? ".class" : "");
+			};
+			
+			bSave.onclick = function(){
+				var oid = this.oid;
+				var val = txt.value;
+				objectlink.gOrm("uO",[oid, val]);
+				hashchange();
+
+			}
+			
+			var ch = document.createElement("INPUT");
+			ch.setAttribute("type", "checkbox");
+			ch.hidden = true;
+			ch.id = cell.id;
+			arrChbxs.push(ch);
+			
+			var td = document.createElement("TD");
+			var tr = document.createElement("TR");
+			td.appendChild(cell);
+			td.style.width = "100%";
+
+			var td2 = document.createElement("TD");
+			td2.appendChild(ch);
+
+			tr.appendChild(td2);
+			tr.appendChild(td);
+			dom.appendChild(tr);	
+			
+		}
+		
+		if (isFile && !isClass) {
+			var img = new Image();
+			var fn = txt.value;
+			var arr = fn.split(".");
+			var arrIm = ['jpg','bmp','png','gif','tif'];
+			var ext = arr[arr.length-1];
+			if (arr && arr.length && ~arrIm.indexOf(ext)) {
+				img.src = domain+url2cp1251(fn);
+			} else {
+				var iconFile = getIconFile(fn);
+				img.src = domain+iconFile;
+			}
+
+			img.width = 128;
+			
+			img.fn = fn;
+			img.style.cursor = "pointer";
+			img.onclick = function(){
+				openWindow(domain+url2cp1251(this.fn));
+			}
+			
+			var td = document.createElement("TD");
+			var tr = document.createElement("TR");
+			td.setAttribute("colspan","2");
+			td.appendChild(img);
+			tr.appendChild(td);
+			dom.appendChild(tr);
+		}
+		lCount.innerHTML = countAll+"("+countClass+"/"+countObjects+")";
+
+		return true;
+		
+	};
+
+	function reload(){
+		return load(" and o2 = "+oid, order);
+	}
+	
+	function hashchange(){
+		$(bHome).focus();
+		var hash = location.hash.split(".");
+		isFile = false;
+		oid = hash[1];
+		isClass = hash[2];
+
+		var n = objectlink.gOrm("gN",[oid]);
+		txt.value = n;
+
+		if (link.checked){
+			oid2 = oid;
+			n2 = n;
+		} else {
+			oid1 = oid;
+			n1 = n;
+		}
+		bSave.oid = oid;
+		stat.innerHTML = "oid1: "+oid1+" ("+n1+"), oid2: "+oid2+" ("+n2+")";
+		reload();
+		
+		if (chAdd2query.checked){
+			var parentCol = $( "input[type=radio]:checked" ).val();
+			var id = arrQuery[0].length;
+			arrQuery[0].push(n);
+			if (parentCol)	arrQuery[1].push([id, parentCol]);
+			arrQuery[4].push("`"+n+"`");
+			
+			var tr = lQuery.appendChild(document.createElement("TR"));
+			var td = tr.appendChild(document.createElement("TD"));
+			var radio = td.appendChild(document.createElement("INPUT"));
+			radio.setAttribute("type", "radio");
+			radio.setAttribute("name", "rQuery");
+			radio.setAttribute("value", id);
+			radio.setAttribute("id", "rQuery"+id);
+
+			var l = td.appendChild(document.createElement("LABEL"));
+			l.innerHTML = n;
+			l.setAttribute("for", "rQuery"+id);
+		}
+		
+		if (!terminalRow.hidden) {
+			terminal.focus();
+
+		}
+	}
+	
+	bTable.onclick = function(){
+		tQuery.hidden = !tQuery.hidden;
+		if (!tQuery.hidden) {
+			var domtable = getOrmObject({columns:arrQuery[0], data:objectlink.gOrm("gT2",arrQuery)}, "all2domtable");
+			domtable.setAttribute("border",1);
+			tQuery.innerHTML = "";
+			var div = tQuery.appendChild(document.createElement("DIV"));
+			div.style.height = windowHeight() - 150 + "px";
+			div.style.width = "100%";
+			div.style.overflow = "auto";
+			div.appendChild(domtable);
+		}
+	}
+	
+	bTable2.onclick = function(){
+		tQuery.hidden = !tQuery.hidden;
+		if (!tQuery.hidden) {
+			var domtable = getOrmObject({columns:arrQuery[0], data:objectlink.gOrm("gT3",[arrQuery[0]])}, "all2domtable");
+			domtable.setAttribute("border",1);
+			tQuery.innerHTML = "";
+			var div = tQuery.appendChild(document.createElement("DIV"));
+			div.style.height = windowHeight() - 150 + "px";
+			div.style.width = "100%";
+			div.style.overflow = "auto";
+			div.appendChild(domtable);
+		}
+	}
+	
+	window.onhashchange = function(){
+		hashchange();
+	}
+
+	function resize(){
+		var arr = document.getElementsByTagName("BUTTON");
+		for (var i=0; i < arr.length; i++){
+			arr[i].style.fontSize = fs;
+		}
+	}
+	
+	bFontSizePlus = document.getElementById("bFontSizePlus");
+	if (bFontSizePlus) {
+		bFontSizePlus.onclick = function(){
+			resize(++fs);
+		};
+	}
+
+	bOrderBy = document.getElementById("bOrderBy");
+	bOrderBy.onclick = function(){
+		this.innerHTML = order == ORDER ? "id" : "n";
+		order = order == ORDER ? " order by c desc, n asc " : ORDER;
+		reload();
+	};
+
+	var bHome = document.getElementById("bHome");
+	function goHome(){
+		oid = "1.class";
+		location.href = "#."+oid;
+		
+	}
+	bHome.onclick = function(){
+		goHome();
+	}
+
+	bEdit.onclick = function(){
+		edit.hidden = !edit.hidden;
+		divContainer.style.height = windowHeight()-(document.getElementById("edit").hidden ? 105 : 145)+"px";
+ 	}
+
+	var bCO = document.getElementById("bCO");
+	bCO.onclick = function(){
+		result = prompt("cO(n); cL(o1,"+oid+")", txt.value+" "+(countObjects+1));
+		if (result) {
+			var o1 = objectlink.gOrm("cO",[result, oid]);
+			//if (oid) objectlink.gOrm("cL",[o1, oid]);
+			reload();
+		} else {
+			alert("Недопустимое значение объекта!");
+		}
+	}
+
+	var bCL = document.getElementById("bCL");
+	bCL.onclick = function(){
+		result = prompt("cL (id,id)", oid1+","+oid2);
+		if (result) {
+			var arr = result.split(",");
+			if (arr && arr.length && arr[0] && arr[1] && arr[0] != arr[1]) {
+				objectlink.gOrm("cL",[arr[0],arr[1]]);
+				reload();
+			} else {
+				alert("Недопустимое значение oid1 или oid2!");
+			}
+			
+		} else {
+			alert("Недопустимое значение oid1 или oid2!");
+		}
+		/*
+		var ret;
+		if (!arrChbxs[0].hidden)
+			ret = prompt("cL (id,[])", oid1+",[...] ?");
+		
+		if (ret) {
+			for (var i=0; i < arrChbxs.length; i++){
+				if (arrChbxs[i].checked) {
+					if (link.checked){
+						objectlink.cL(arrChbxs[i].id, oid2)
+						//console.log(arrChbxs[i].id + " " + oid2);
+					} else {
+						objectlink.cL(oid1, arrChbxs[i].id)
+						//console.log(oid1 + " " + arrChbxs[i].id);
+					}
+				}
+			}
+			arrChbxs = [];
+			reload();
+			
+		} else {
+			for (var i=0; i < arrChbxs.length; i++){
+				arrChbxs[i].hidden = false;
+			}
+		}
+		*/
+	}
+
+	var bEO = document.getElementById("bEO");
+	bEO.onclick = function(){
+		result = prompt("eO (id)", oid);
+		if (result) {
+			objectlink.gOrm("eO",[result]);
+			history.back();
+			//hashchange();
+			//goHome();
+		} else {
+			alert("Недопустимое значение id!");
+		}
+	}
+
+	var bEL = document.getElementById("bEL");
+	bEL.onclick = function(){
+		result = prompt("eL (id,id)", oid1+","+oid2);
+		if (result) {
+			var arr = result.split(",");
+			if (arr && arr.length && arr[0] && arr[1] && arr[0] != arr[1]) {
+				objectlink.gOrm("eL",[arr[0],arr[1]]);
+				hashchange();
+				//goHome();
+			} else {
+				alert("Недопустимое значение oid1 или oid2!");
+			}
+			
+		} else {
+			alert("Недопустимое значение oid1 или oid2!");
+		}
+	}
+	
+	function createClass(){
+		result = prompt("cC(n)", txt.value+" "+(countObjects+1));
+		if (result) {
+			var o1 = objectlink.gOrm("cO",[result, oid]);
+			//if (oid) objectlink.gOrm("cL",[o1, oid]);
+			if (oid) objectlink.gOrm("cL",[o1, 1]);
+			reload();
+		} else {
+			alert("Недопустимое значение объекта!");
+		}
+	}
+	
+	window.onkeydown = function(event) {
+		if (event.keyCode == 118 && event.shiftKey) {
+			createClass();
+		} else 
+		if (event.keyCode == 118) {
+			bCO.onclick();
+		}
+		
+		if (event.keyCode == 115) {
+			bCL.onclick();
+		}
+		if (event.keyCode == 120) {
+			terminalRow.hidden = !terminalRow.hidden;
+			terminalRow.height = "100%";
+			terminal.focus();
+
+		}
+	};
+
+/*
+	filepath.onchange = function(){
+		txt.value = this.value;
+	}
+*/	
+
+	function handleFileSelect(evt) {
+		var files = evt.target.files;
+
+		var output = [];
+		for (var i = 0, f; f = files[i]; i++) {
+			/*var fn = "";
+			var reader = new FileReader();
+			reader.onload = (function(theFile) {
+				return function(e) {
+					//console.log(e.target);
+				};
+			})(f);
+			
+			reader.readAsDataURL(f);*/
+			txt.value = "data/objects/21/"+f.name;
+		}
+		bSave.click();
+		//txt.value = output.join(';');
+	}
+
+	files.addEventListener('change', handleFileSelect, false);	
+
+	terminal.onkeydown = function(event) {
+		if (event.keyCode == 13) {
+			var commands = this.value.split("\n");
+			var command = commands[commands.length-1];
+			parseCommand(command);
+		}
+	}
+	
+	function parseCommand(command){//удалить объект,кадастр;широта,долгота
+		var ci = command.split(" ")[0].toLowerCase();
+		var objects = command.substr(ci.length+1, command.length).split(";");
+
+		switch (ci){
+			case "select":
+			case "ls":
+			case "go":
+			case "выбрать":
+				if (objects[0]) {
+					location.href = "#."+objectlink.gOrm("gO",[objects[0], true]);//objectlink.gO(objects[0]);
+				}
+			break;
+			case "create":
+			case "co":
+			case "создать":
+				if (objects[0]) {
+					var o1 = objectlink.gOrm("cO",[objects[0], oid]);
+					//if (oid) objectlink.gOrm("cL",[o1, oid]);
+					reload();
+				}
+			break;
+			case "link":
+			case "cl":
+			case "связать":
+				if (objects[0] && objects[1]) {
+					var o1 = objects[0].split(",");
+					var o2 = objects[1].split(",");
+					
+					for (var i=0; i < o1.length; i++){
+						for (var j=0; j < o2.length; j++){
+							objectlink.gOrm("cL",[objectlink.gOrm("gO",[o1[i]]), objectlink.gOrm("gO",[o2[j]])])
+							//console.log("link "+objectlink.gO(o1[i])+" "+objectlink.gO(o2[j])+"\n");
+						}
+					}
+					reload();
+				}
+			break;
+			case "delete":
+			case "eO":
+			case "eL":
+			case "удалить":
+				if (objects[0] && !objects[1]) {
+					var o1 = objects[0].split(",");
+					for (var i=0; i < o1.length; i++){
+						objectlink.gOrm("eO",[objectlink.gOrm("gO",[o1[i]])])
+						//console.log("eO "+objectlink.gO(o1[i]));
+					}
+					goHome();
+				} else if (objects[0] && objects[1]) {
+					var o1 = objects[0].split(",");
+					var o2 = objects[1].split(",");
+					
+					for (var i=0; i < o1.length; i++){
+						for (var j=0; j < o2.length; j++){
+							objectlink.gOrm("eL",[objectlink.gOrm("gO",[o1[i]]), objectlink.gOrm("gO",[o2[j]])])
+							//console.log("eL "+objectlink.gO(o1[i])+" "+objectlink.gO(o2[j])+"\n");
+						}
+					}
+					goHome();
+					
+				}
+			break;
+			
+		}
+	
+	}
+	
+	bAddCard.onclick = function(){
+		if (!isClass) {
+			var cid = objectlink.gOrm("gCid",[oid]);
+			if (cid && cid.length) {
+				openWindow("add.html#cid="+cid[0][0]+"&oid="+oid);
+			}
+		} else {
+			openWindow("add.html#cid="+oid);
+		}
+		
+	}
+	
+	
+</script>
+</body>
+</html>

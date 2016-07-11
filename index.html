@@ -1,0 +1,415 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta http-equiv="Cache-Control" content="no-cache" />
+		
+		<link rel="stylesheet" type="text/css" href="css/main.css">
+		<link rel="stylesheet" type="text/css" href="css/jsTable.css">
+
+		<script src="js/jquery-2.2.0.min.js"></script>
+		<script src="js/uService.js"></script>
+		<script src="js/objectlink.js"></script></head>
+		<script src="js/jscharts.js"></script></head>
+		<script src="js/GetSet.js"></script>
+		<script src="js/Filter.js"></script>
+		<script src="js/Column.js"></script>
+		<script src="js/JsTable.js"></script>
+
+<script>
+////////////policy
+	var classes_ = objectlink.gOrm("gAnd",[[1],"n,id"]);
+	var classes = hash4arr(classes_);
+	var oids = [];
+	var key = $_GET("key", "#", location.hash);
+
+////////////documentReady
+	$(document).ready(function(){
+		var pSearch = gDom("pSearch");
+
+		var pDop =  gDom("pDop");
+		pDop.style.left = windowWidth()-parseInt(pDop.style.width)-5+"px";
+		pDop.style.top = windowHeight()-parseInt(pDop.style.height)-5+"px";
+		var pDopData = gDom("pDopData");
+
+		var setup = gDom("setup");
+		var eDopWidth = gDom("eDopWidth");
+		var eDopHeight = gDom("eDopHeight");
+		eDopWidth.onchange = function(){
+			pDop.style.width = this.value;
+			pDop.style.left = windowWidth()-parseInt(pDop.style.width)-5+"px";
+		};
+		eDopHeight.onchange = function(){
+			pDop.style.height = this.value;
+			pDop.style.top = windowHeight()-parseInt(pDop.style.height)-5+"px";
+		};
+		var modalCont = gDom("modalCont");
+		
+////////////////modal
+		var modal = document.getElementById('myModal');
+		var span = document.getElementsByClassName("close")[0];
+
+		span.onclick = function() {
+			modal.style.display = "none";
+		}
+
+		window.onclick = function(event) {
+			if (event.target == modal) {
+				modal.style.display = "none";
+			}
+		}
+		
+		window.onkeydown = function(event) {
+			if (event.keyCode == 27) {
+				modal.style.display = "none";
+			}
+		};
+
+////////////////showModal
+		function showModalHtml(html, clear){
+			if (clear){
+				gDom("modalTitle").innerHTML = "";
+				gDom("modalBody").innerHTML = "";
+				gDom("modalFooter").innerHTML = "";
+			}
+			$("#modalBody").append(html);
+			modalCont.style.top = "100px";//Math.round(windowHeight()/2-parseInt($("#modalBody").height())/2)-20+"px";
+			modal.style.display = "block";
+			//modalCont.style.left = Math.round(windowWidth()/2-parseInt($("#modalBody").width())/2)-70+"px";
+			
+		}
+
+		function showInf(container, html){
+			container.innerHTML = "";
+			$(container).append(html);
+			container.parentNode.hidden = false;				
+		}
+		
+		window.onhashchange = function(){
+			hashchange();
+		}
+
+		var oid = $_GET("oid", "#", location.hash);
+		hashchange();
+		
+		function hashchange(){
+			oid = $_GET("oid", "#", location.hash);// || "115";
+			//pDop.hidden = false;
+		}
+
+		var container = document.getElementsByClassName("jsTableContainer")[0];
+		//var fields = ["Заказы","Период заказа","Место загрузки","Место разгрузки","Исполнитель","Тип транспорта","Водитель","Клиент"];
+		//var sel = objectlink.gOrm("gTq2",[fields,[],[],0]);
+		//sel = "select `id_Заказы`,"+decorateArr(fields, "`").join(",")+" from ("+sel+")x where 1=1 ";
+		var sel = "select f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11 from trans";
+
+		var query = {
+			select:sel,
+			where:"",
+			order:""
+		};
+		var colors = [
+			new RowColorMarker({
+				color: "#ffeeee",
+				conditions: [new FieldCondition({field: "f1", compareType: "=", value: "3", condType: "and"})]
+			}),
+			new RowColorMarker({
+				color: "#eeffee",
+				conditions: [new FieldCondition({field: "f1", compareType: "=", value: "1", condType: "and"})]
+			}),
+		];
+		var colsOpts = [
+			new Column({'id' : 0,  'name' : 'f1',  'caption' : 'ID', 'width' : 40, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 1,  'name' : 'f2',  'caption' : 'Период', 'width' : 220, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 2,  'name' : 'f3',  'caption' : 'Загрузка', 'width' : 100, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 3,  'name' : 'f4',  'caption' : 'Разгрузка', 'width' : 100, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 4,  'name' : 'f5',  'caption' : 'Исполнитель', 'width' : 100, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 5,  'name' : 'f6',  'caption' : 'Тип транспорта', 'width' : 70, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 6,  'name' : 'f7',  'caption' : 'Водитель', 'width' : 100, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 7,  'name' : 'f8',  'caption' : 'Клиент', 'width' : 100, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 8,  'name' : 'f9',  'caption' : 'Контакт', 'width' : 100, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 9,  'name' : 'f10', 'caption' : 'К оплате', 'width' : 50, 'visible' : true, 'class' : undefined}),
+			new Column({'id' : 10, 'name' : 'f11', 'caption' : 'Исполнителю', 'width' : 50, 'visible' : true, 'class' : undefined}),
+		];
+		var tbHeight = windowHeight() * (380/699);
+		var opts = {tableWidth:1200, tableHeight:tbHeight, columns: colsOpts, rowsColor: colors, /*cols2Button: [4,5]*/};
+		var jsTable = new JsTable(query, opts, container);
+
+		but1 = document.createElement("BUTTON");
+		but1.innerHTML = "Добавить заказ";
+		but1.onclick = function(){
+		}
+		addToTable(jsTable, but1);
+
+		but2 = document.createElement("BUTTON");
+		but2.innerHTML = "Редактировать Справочники";
+		but2.onclick = function(){
+		}
+		addToTable(jsTable, but2);
+		
+		var rows = jsTable.rows.get();
+		var cellDblClickFunc = function(){
+		};
+		jsTable.cellDblClickFunc.set(cellDblClickFunc);
+		
+		var bclick = function(that){
+			var zak_type = that.col == 4 ? "ПИР" : "СМР";
+			var bsid = jsTable.rows.get()[that.row][0];
+			
+			var f_zak = ["Заказы номер","Заказы дата подписания","Заказы дата закрытия","Заказы статус","Примечание"];
+			var zak = objectlink.gOrm("gT2",[["Заказы "+zak_type,"БС"].concat(f_zak),[],[],false,
+				null,"and `id_БС` = "+bsid," order by `id_Заказы "+zak_type+"` desc limit 1"]);
+			var zak_num, zak_d_start, zak_d_end, zak_stat, zak_id, fields, vals, zak_vals;
+				
+			if (zak && zak.length) {
+				zak_num = zak[0][5];
+				zak_d_start = zak[0][7];
+				zak_d_end = zak[0][9];
+				zak_stat = zak[0][11];
+				zak_context = zak[0][13];
+				zak_id = zak[0][0];
+				zak_vals = [zak_num, zak_d_start, zak_d_end, zak_stat];
+			} else zak_id = undefined;
+
+			if (true || zak_id) {
+				switch (zak_type) {
+				case "ПИР":
+					var zak = objectlink.gOrm("gT2",[["Заказы ПИР","ПСЭЗ","ЭЗ1","Р1"],[],[],false,null,"and `id_Заказы ПИР` = '"+zak_id+"'"]);
+					//if (zak && zak.length) {
+						var psez = zak && zak.length ? zak[0][2] : "";
+						var ez1 = zak && zak.length ? zak[0][4] : "";
+						var r1 = zak && zak.length ? zak[0][6] : "";
+						
+						var f_psez = [
+						"ПСЭЗ",
+						"Взят в работу",
+						"Запрос информации у стороннего оператора",
+						"Получение ответа от стороннего оператора",
+						"Выполнен",
+						"Передан в МТС на подписание",
+						"Получен из МТС подписанный",
+						"Передан во ФБУЗ",
+						"Готов",				
+						];
+						var psez = objectlink.gOrm("gT2",[f_psez,[],[],false,null,"and `id_ПСЭЗ` = '"+psez+"'"]);
+						
+						var f_ez1 = [
+						"ЭЗ1",
+						"Заявление подписано в МТС",
+						"Дата подачи в ЦГиЭ",
+						"Входящий номер в ЦГиЭ",
+						"Номер счета",
+						"Сумма",
+						"Статус счета",
+						"Получение",
+						];
+						var ez1 = objectlink.gOrm("gT2",[f_ez1,[],[],false,null,"and `id_ЭЗ1` = '"+ez1+"'"]);
+						
+						var f_r1 = [
+						"Р1",
+						"Заявление РПН подписано МТС",
+						"Номер заявления на размещение в РПН",
+						"Дата подачи в РПН",
+						"Получено из РПН",
+						"Передано в МТС",
+						];
+						var r1 = objectlink.gOrm("gT2",[f_r1,[],[],false,null,"and `id_Р1` = '"+r1+"'"]);
+						
+						fields = [f_psez, f_ez1, f_r1];
+						vals = [psez[0], ez1[0], r1[0]];
+						
+					//}
+						
+				break;
+				case "СМР":
+					var zak = objectlink.gOrm("gT2",[["Заказы СМР","Замеры","ЭЗ2","Р2"],[],[],false,null,"and `id_Заказы СМР` = '"+zak_id+"'"]);
+					//if (zak && zak.length) {
+						var zam = zak && zak.length ? zak[0][2] : "";
+						var ez2 = zak && zak.length ? zak[0][4] : "";
+						var r2 = zak && zak.length ? zak[0][6] : "";
+
+						var f_zam = [
+						"Замеры",
+						"Заявление подписано в МТС",
+						"Подано на замеры в ЦГиЭ",
+						"Входящий номер ФБУЗ заявления",
+						"Номер счета",
+						"Сумма",
+						"Статус счета",
+						"Дата проведения",
+						];
+						var zam = objectlink.gOrm("gT2",[f_zam,[],[],false,null,"and `id_Замеры` = '"+zam+"'"]);
+						
+						var f_ez2 = [
+						"ЭЗ2",
+						"Заявление подписано в МТС",
+						"Дата подачи в ЦГиЭ",
+						"Входящий номер в ЦГиЭ",
+						"Получение",
+						];
+						var ez2 = objectlink.gOrm("gT2",[f_ez2,[],[],false,null,"and `id_ЭЗ2` = '"+ez2+"'"]);
+						
+						var f_r2 = [
+						"Р2",
+						"Заявление РПН подписано МТС",
+						"Дата подачи в РПН",
+						"Номер заявления на размещение в РПН",
+						"Получено из РПН",
+						"Передано в МТС",
+						];
+						var r2 = objectlink.gOrm("gT2",[f_r2,[],[],false,null,"and `id_Р2` = '"+r2+"'"]);
+						
+						fields = [f_zam, f_ez2, f_r2];
+						vals = [zam[0], ez2[0], r2[0]];
+
+					//}
+					break;
+				}
+				
+				var tb = cDom("TABLE");
+				showModalHtml(tb, true);
+
+				tb.setAttribute("align", "center");
+				var tr_caption = tb.appendChild(cDom("TR"));
+				var tr_bs = tb.appendChild(cDom("TR"));
+				var tr_zak = tb.appendChild(cDom("TR"));
+				var tr_inf = tb.appendChild(cDom("TR"));
+				var tr_context = tb.appendChild(cDom("TR"));
+				var tr_buttons = tb.appendChild(cDom("TR"));
+				
+				///заголовок
+				var td_caption = tr_caption.appendChild(cDom("TD"));
+				td_caption.setAttribute("align", "center");
+				var lCaption = td_caption.appendChild(cDom("h3"));
+				lCaption.innerHTML = zak_type;
+
+				///заказ
+				var td_zak = tr_zak.appendChild(cDom("TD"));
+				var tb_zak = td_zak.appendChild(cDom("TABLE"));
+				tb_zak.setAttribute("cellpadding", 10);
+				var tr_name = tb_zak.appendChild(cDom("TR"));
+				var tr_val = tb_zak.appendChild(cDom("TR"));
+				for (var i = 0; i < f_zak.length-1; i++) {
+					var td_ = tr_name.appendChild(cDom("TD"));
+					td_.innerHTML = f_zak[i];
+					var td_ = tr_val.appendChild(cDom("TD"));
+					
+					var inp = td_.appendChild(cDom("INPUT"));
+					inp.setAttribute("type", "edit");
+					inp.value = zak_vals && zak_vals.length ? zak_vals[i] : "";
+				}
+				
+				///этапы заказа
+				var td_inf = tr_inf.appendChild(cDom("TD"));
+				var tb_inf = td_inf.appendChild(cDom("TABLE"));
+				tb_inf.setAttribute("cellpadding", 10);
+				var tr = tb_inf.appendChild(cDom("TR"));
+				
+				for (var j = 0; j < fields.length; j++) {
+					var td_ = tr.appendChild(cDom("TD"));
+					td_.setAttribute("valign", "top");
+					var tb_ = td_.appendChild(cDom("TABLE"));
+					for (var i = 0; i < fields[j].length; i++) {
+						var tr_ = tb_.appendChild(cDom("TR"));
+						var td_name = tr_.appendChild(cDom("TD"));
+						var td_val = tr_.appendChild(cDom("TD"));
+						td_name.style.borderBottom = "1px solid #c4baa5";
+						td_name.innerHTML = fields[j][i];
+						//td_val.innerHTML = i > 0 ? vals[j][i*2+1] : "";
+						if (i > 0) {
+							var inp = td_val.appendChild(cDom("INPUT"));
+							inp.setAttribute("type", "edit");
+							inp.value = vals && vals.length && vals[j].length ? vals[j][i*2+1] : "";
+						} else {
+							td_name.style.fontWeight = "bold";
+							td_val.style.borderBottom = "1px solid #c4baa5";
+						}
+						
+					}
+				}
+				
+				///примечание
+				var td_context = tr_context.appendChild(cDom("TD"));
+				var tb_context = td_context.appendChild(cDom("TABLE"));
+				tb_context.style.width = "100%";
+				tb_context.setAttribute("cellpadding", 10);
+				var tr_name = tb_context.appendChild(cDom("TR"));
+				var tr_val = tb_context.appendChild(cDom("TR"));
+				var td_name = tr_name.appendChild(cDom("TD"));
+				td_name.innerHTML = "Примечание";
+				var td_val = tr_val.appendChild(cDom("TD"));
+				var ta_context = td_val.appendChild(cDom("TEXTAREA"));				
+				ta_context.value = zak_context;
+				ta_context.setAttribute("rows", 10);
+				ta_context.style.width = "100%";
+				
+				///кнопки
+				var td_buttons = tr_buttons.appendChild(cDom("TD"));
+				var bSave = td_buttons.appendChild(cDom("BUTTON"));
+				bSave.innerHTML = "Сохранить";
+				bSave.onclick = function(){
+					modal.style.display = "none";
+
+				}
+				
+			}
+		}
+		jsTable.cols2ButtonClick.set(bclick);
+		
+	})
+</script>
+
+	</head>
+	<body>
+		<div id="myModal" class="modal">
+		  <div class="modal-content" id="modalCont">
+			<div class="modal-header">
+			  <span class="close">&times;</span>
+			  <h3 id='modalTitle'></h2>
+			</div>
+			<div class="modal-body" id='modalBody'>
+			</div>
+			<div class="modal-footer" id='modalFooter'>
+			</div>
+		  </div>
+		</div>
+		
+		<table style='width:100%; height:100%' id="mainTable">
+		<tr style='height:100px'>
+			<td align="center"></td>
+		</tr>
+		<tr height="100%">
+			<td class="jsTableContainer" id="divData" align='center'>
+			</td>
+		</tr>
+		</table>
+		
+		<div id='logo' style='position:absolute; left:0px; top:10px; width:100px; text-align:center; border-radius:5px'>
+			<table><tr><td align='center'><img src='images/logo.png' width='128'/></td></tr>
+			<tr><td align='center'><label>База Данных</label></td></tr></table>
+		</div>
+		
+		<div id='pDop' hidden style='position:absolute; height:300px; width:500px; left:1030px; top:540px; background-color:rgba(0,0,0,0.8); z-index:100000; overflow-y:auto; overflow-x:hidden'>
+			<div id='pDopData' style='background-color:rgba(0,0,0,0); border:0px; width:100%' class='div-table'>
+			</div>
+		</div>
+		<div style='position:absolute' hidden>
+			<table id='setup'>
+			<tr><td colspan=2><h3>Настройки</h3></td></tr>
+			<tr><td>Ширина информационного окна</td><td><input type='edit' id='eDopWidth' /></td></tr>
+			<tr><td>Высота информационного окна</td><td><input type='edit' id='eDopHeight'/></td></tr>
+			</table>
+		</div>
+		<div style='position:absolute; left:0px; top:0px; width:100%; height:100%; z-index:1100000; background-color:rgba(0,0,0,0.7)' hidden id='mainContainer'>
+			<div id='pLogin' style='position:fixed; left:500px; top:400px; background-color:rgba(0,0,0,0.5)'>
+				<form name="fLogin" onsubmit='return false;' id='fLogin'>
+				<table cellpadding="5" cellspacing="5">
+					<tr><td>Логин:</td><td> <input type='text' id='eUser' autofocus></td></tr>
+					<tr><td>Пароль:</td><td> <input type='password' id='ePassword' name='ePassword'></td></tr>
+					<tr><td colspan=2 align='center'><button id='bLogin'>Войти</button></td></tr>
+				</table>
+				</form>
+			</div>
+		</div>
+		
+	</body>
+</html>

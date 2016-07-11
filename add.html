@@ -1,0 +1,241 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<link rel="stylesheet" type="text/css" href="css/main.css">
+		
+		<script src="js/jquery-2.2.0.min.js"></script>
+		<script src="js/uService.js"></script>
+		<script src="js/objectlink.js"></script>
+		
+	</head>
+	<body style="overflow-y:auto">
+		<table id='mainContainer' width="100%"></table>
+	</body>
+</html>
+
+<script>
+	var classes_ = objectlink.gOrm("gAnd",[[1],"n,id"]);
+	var classes = hash4arr(classes_);
+	var arrClasses = objectlink.gOrm("gAnd",[[1],"id,n"]);
+	var cid = $_GET("cid", "#", location.hash);
+	var oid = $_GET("oid", "#", location.hash);
+	var mainContainer = gDom("mainContainer");
+	var changedValues = [];
+	var changedValuesOld = [];
+
+	function fillSelectDom(dom, values) {
+		dom.appendChild(cDom("OPTION"));
+		for (var i=0; i < values.length; i++){
+			var opt = cDom("OPTION");
+			opt.innerHTML = values[i][1];
+			opt.value = values[i][0];
+			opt.oid = values[i][0];
+			opt.id = "opt"+values[i][0];
+			dom.appendChild(opt);
+		}
+	}
+	
+	if (cid) {
+		var parent = objectlink.gOrm("gAnd", [[cid],null,null,null,true,true]);
+		var child = objectlink.gOrm("gAnd", [[cid],null,null,null,false,true]);
+		
+		var columns = ["expand","classname","objectvalueslist"];
+		var cont = document.body;
+		
+		var fill = function(contTr, j, id, val){
+			var td = contTr.appendChild(cDom("TD"))
+			td.style.borderBottom = "1px solid #e4ddc6";
+			switch (j){
+				case 0:
+					var dom = td.appendChild(cDom("BUTTON"));
+					dom.innerHTML = "+"
+					dom.id = "expand"+id;
+					dom.oid = id;
+					dom.onclick = function(){
+						openWindow(location.origin+location.pathname+"#cid="+this.oid);
+					}
+				break;
+				case 1:
+					var dom = td.appendChild(cDom("LABEL"));
+					dom.innerHTML = val
+					dom.id = "class"+id;
+					dom.oid = id;
+				break;
+				case 2:
+					var dom = td.appendChild(cDom("SELECT"));
+					dom.style.width = "500px";
+					var values = objectlink.gOrm("gT2",[[val],[],[],null,null," order by `"+val+"`"]);
+					fillSelectDom(dom, values);
+					dom.id = "cb"+id;
+					dom.oid = id;
+					dom.onchange = function(){
+						changedValues.push(this.oid);
+						this.ischanged = true;
+					}
+				break;
+			}
+		}
+		
+////////parent classes
+		for (var i=0; i < parent.length; i++){
+			if (parent[i][0] == 1) continue;
+			var tr = mainContainer.appendChild(cDom("TR"));
+			for (var j=0; j < columns.length; j++){
+				fill(tr, j, parent[i][0], parent[i][1]);
+			}
+		}
+
+////////main class
+		var tr = mainContainer.appendChild(cDom("TR"));
+		var cn = objectlink.gOrm("gN", [cid]);
+		var td = tr.appendChild(cDom("TD"))
+		td.style.borderBottom = "1px solid #e4ddc6";
+		td.setAttribute("colspan", 2);
+		td.innerHTML = "<b>"+cn+"</b>";
+		var td = tr.appendChild(cDom("TD"))
+		td.style.borderBottom = "1px solid #e4ddc6";
+		var eValue = td.appendChild(cDom("INPUT"));
+		eValue.style.width = "500px";
+		eValue.setAttribute("type", "edit");
+		eValue.value = cn+"1";
+
+////////child classes
+		for (var i=0; i < child.length; i++){
+			var tr = mainContainer.appendChild(cDom("TR"));
+			for (var j=0; j < columns.length; j++){
+				fill(tr, j, child[i][0], child[i][1]);
+			}
+		}
+
+		var tr = mainContainer.appendChild(cDom("TR"));
+		var td = tr.appendChild(cDom("TD"));
+		td.setAttribute("colspan", 4);
+		td.style.borderBottom = "1px solid #e4ddc6";
+		
+
+////////oid fill		
+		if (oid) {
+			var cols = [cn];
+			for (var i=0; i < parent.length; i++){
+				if (parent[i][0] == 1) continue;
+				cols.push(parent[i][1]);
+			}
+			for (var i=0; i < child.length; i++){
+				cols.push(child[i][1]);
+			}
+			var obj = objectlink.gOrm("gT2",[cols,[],[],false,null,"and `id_"+cn+"`="+oid+" order by `"+cn+"` limit 1"]);
+			
+			if (obj && obj.length) {
+				eValue.value = obj[0][1];
+				var ind = 1;
+				for (var i=0; i < parent.length; i++){
+					if (parent[i][0] == 1) continue;
+					var dom = gDom("cb"+parent[i][0]);
+					dom.value = obj[0][ind*2];
+					dom.oldValue = obj[0][ind*2];
+					ind++;
+					
+				}
+
+				for (var i=0; i < child.length; i++){
+					var dom = gDom("cb"+child[i][0]);
+					dom.value = obj[0][ind*2];
+					dom.oldValue = obj[0][ind*2];
+					ind++;
+				}		
+			}
+		}
+		
+////////filter for
+		var tr = mainContainer.appendChild(cDom("TR"));
+		var td = tr.appendChild(cDom("TD"));
+		td.setAttribute("colspan", 4);
+		var eClass4filter = td.appendChild(cDom("SELECT"));
+		fillSelectDom(eClass4filter, [].concat(parent).concat(child));
+
+////////filter class
+		var tr = mainContainer.appendChild(cDom("TR"));
+		var td = tr.appendChild(cDom("TD"));
+		td.setAttribute("colspan", 4);
+		var eFilterClass = td.appendChild(cDom("SELECT"));
+		fillSelectDom(eFilterClass, arrClasses);
+		
+////////filter class object
+		var tr = mainContainer.appendChild(cDom("TR"));
+		var td = tr.appendChild(cDom("TD"));
+		td.setAttribute("colspan", 4);
+		var eFilterObject = td.appendChild(cDom("SELECT"));
+		eFilterClass.onchange = function(){
+			eFilterObject.innerHTML = "";
+			var filterObjects = objectlink.gOrm("gAnd",[[this.value],"id,n",true]);
+			fillSelectDom(eFilterObject, filterObjects);
+		}
+		
+////////filter class
+		eFilterObject.onchange = function(){
+			var c4f = eClass4filter.value;
+			if (!c4f) return;
+			var cn4f = gDom("opt"+c4f).innerHTML;
+			if (!cn4f) return;
+			
+			var fc = eFilterClass.value;
+			if (!fc) return;
+			var fcn = gDom("opt"+fc).innerHTML;
+			if (!fcn) return;
+
+			var fo = eFilterObject.value;
+			if (!fo) return;
+			
+			var cb = gDom("cb"+c4f);
+			if (!cb) return;
+			cb.innerHTML = "";
+
+			var values = objectlink.gOrm("gT2",[[cn4f, fcn],[],[],false,null," and `id_"+fcn+"`="+fo]);
+			if (!values || !values.length) return;
+			fillSelectDom(cb, values);
+			
+		}
+		
+////////save result
+		var tr = mainContainer.appendChild(cDom("TR"));
+		var td = tr.appendChild(cDom("TD"));
+		td.setAttribute("colspan", 4);
+		var bSave = td.appendChild(cDom("BUTTON"));
+		bSave.innerHTML = "Save";
+		
+		bSave.onclick = function(){
+			//changedValues
+			var obj = oid ? oid : objectlink.gOrm("cO",[eValue.value, cid]);
+			
+			if (obj) {
+				for (var i=0; i < parent.length; i++){
+					if (parent[i][0] == 1) continue;
+					var cb = gDom("cb"+parent[i][0]);
+					if (cb.ischanged) {
+						objectlink.gOrm("cL",[obj, cb.value]);
+						if (cb.oldValue) {
+							objectlink.gOrm("eL",[obj, cb.oldValue]);
+						}
+					}
+					
+				}
+
+				for (var i=0; i < child.length; i++){
+					var cb = gDom("cb"+child[i][0]);
+					if (cb.ischanged) {
+						objectlink.gOrm("cL",[cb.value, obj]);
+						if (cb.oldValue) {
+							objectlink.gOrm("eL",[cb.oldValue, obj]);
+						}
+					}
+				}
+			}
+			if (!oid) location.hash = location.hash + "&oid="+obj;
+			location.reload();
+		}
+		
+	
+	}
+	
+</script>
+		
