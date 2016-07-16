@@ -100,7 +100,7 @@
 		//var fields = ["Заказы","Период заказа","Место загрузки","Место разгрузки","Исполнитель","Тип транспорта","Водитель","Клиент"];
 		//var sel = objectlink.gOrm("gTq2",[fields,[],[],0]);
 		//sel = "select `id_Заказы`,"+decorateArr(fields, "`").join(",")+" from ("+sel+")x where 1=1 ";
-		var sel = "select f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11 from trans";
+		var sel = "select f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11 from trans where 1=1 ";
 
 		var query = {
 			select:sel,
@@ -131,7 +131,7 @@
 			new Column({'id' : 10, 'name' : 'f11', 'caption' : 'Исполнителю', 'width' : 50, 'visible' : true, 'class' : undefined}),
 		];
 		var tbHeight = windowHeight() * (380/699);
-		var opts = {tableWidth:1200, tableHeight:tbHeight, columns: colsOpts, rowsColor: colors, /*cols2Button: [4,5]*/};
+		var opts = {tableWidth: 1200, tableHeight: tbHeight, columns: colsOpts, rowsColor: colors, /*cols2Button: [4,5]*/};
 		var jsTable = new JsTable(query, opts, container);
 
 		but1 = document.createElement("BUTTON");
@@ -266,7 +266,6 @@
 				}
 				
 				var tb = cDom("TABLE");
-				showModalHtml(tb, true);
 
 				tb.setAttribute("align", "center");
 				var tr_caption = tb.appendChild(cDom("TR"));
@@ -350,6 +349,8 @@
 					modal.style.display = "none";
 
 				}
+				////////show panel
+				showModalHtml(tb, true);
 				
 			}
 		}
