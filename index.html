@@ -12,8 +12,11 @@
 		<script src="js/jscharts.js"></script></head>
 		<script src="js/GetSet.js"></script>
 		<script src="js/Filter.js"></script>
+		<script src="js/ObjFilter.js"></script>
 		<script src="js/Column.js"></script>
+		<script src="js/ObjColumn.js"></script>
 		<script src="js/JsTable.js"></script>
+		<script src="js/ObjTable.js"></script>
 
 <script>
 ////////////policy
@@ -117,6 +120,7 @@
 				conditions: [new FieldCondition({field: "f1", compareType: "=", value: "1", condType: "and"})]
 			}),
 		];
+		/*
 		var colsOpts = [
 			new Column({'id' : 0,  'name' : 'f1',  'caption' : 'ID', 'width' : 40, 'visible' : true, 'class' : undefined}),
 			new Column({'id' : 1,  'name' : 'f2',  'caption' : 'Период', 'width' : 220, 'visible' : true, 'class' : undefined}),
@@ -130,10 +134,21 @@
 			new Column({'id' : 9,  'name' : 'f10', 'caption' : 'К оплате', 'width' : 50, 'visible' : true, 'class' : undefined}),
 			new Column({'id' : 10, 'name' : 'f11', 'caption' : 'Исполнителю', 'width' : 50, 'visible' : true, 'class' : undefined}),
 		];
+		*/
 		var tbHeight = windowHeight() * (380/699);
-		var opts = {tableWidth: 1200, tableHeight: tbHeight, columns: colsOpts, rowsColor: colors, /*cols2Button: [4,5]*/};
-		var jsTable = new JsTable(query, opts, container);
+		//var opts = {tableWidth: 1200, tableHeight: tbHeight, columns: colsOpts, rowsColor: colors, /*cols2Button: [4,5]*/};
+		//var jsTable = new JsTable(query, opts, container);
 
+		var colsOpts = [
+			new ObjColumn({'id' : 0,  'name' : 'Заказы'}),
+			new ObjColumn({'id' : 1,  'name' : 'Клиент'}),
+			new ObjColumn({'id' : 2,  'name' : 'Исполнитель', 'caption' : '_Исполнитель', visible:false }),
+			new ObjColumn({'id' : 3,  'name' : 'Сумма заказа'}),
+			new ObjColumn({'id' : 4,  'name' : 'Организации', 'caption' : 'Исполнитель', 'parentCol' : 2}),
+		];
+		var opts = {tableWidth: 1200, tableHeight: tbHeight, columns: colsOpts, rowsColor: undefined};
+		var jsTable = new ObjTable(query, opts, container);
+		
 		but1 = document.createElement("BUTTON");
 		but1.innerHTML = "Добавить заказ";
 		but1.onclick = function(){
