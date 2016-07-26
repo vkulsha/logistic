@@ -56,15 +56,13 @@ function Filter(params) {
 		var queryAll = that.queryAll.get();
 		if (!queryAll || !column) return result;
 
-		//var q = "select distinct `"+column.name+"` from ("+queryAll.split("order")[0]+" group by `"+column.name+"`)xxx order by `"+column.name+"`";
 		var q = "select distinct `"+column.name+"` from ("+queryAll.split("order")[0]+" )xxx order by `"+column.name+"`";
-		//var values = getOrm(q, "col2array")
-		//var values = orm(q, "col2array")
 		var values = getOrmObject(objectlink.gOrm("sql", ["(select distinct `"+column.name+"` from ("+queryAll.split("order")[0]+" )xxx order by `"+column.name+"`)x"]), "col2array");
 		if (values && values.length) {
 			result = values;
 		}
-		
+	
+	
 		return result;
 	});
 	this.columnValues = new GetSet("columnValues", null, function(){//jsDistinctValuesOfCurrentColumn.get(false);
@@ -245,7 +243,7 @@ function Filter(params) {
 		var column = that.currentColumn.get();
 		var columnsFilter = that.columnsFilter.get();
 		if ( !column || !columnsFilter ) return result;
-		
+
 		var arr = [];
 		for (var i=0; i < columnsFilter.length; i++) {
 			arr.push(columnsFilter[i].filter);
@@ -269,7 +267,7 @@ function Filter(params) {
 			columnsFilter[i].userFilter = "";
 		}
 		that.userFilter.set("");
-		
+		that.panelFilterResult.set("");
 	});
 	
 }
