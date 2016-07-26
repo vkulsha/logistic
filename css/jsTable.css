@@ -37,3 +37,8 @@ table.jsTable tfoot, table.jsTable thead tr, table.jsTable thead, table.jsTable 
 	background-color: #fff7d9;
 	
 }
+
+.highlight {
+	width: 100%;
+	background-color: #fffff0;
+}
