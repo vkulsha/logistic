@@ -8,10 +8,10 @@
 //call : call procedure once time
 //proc : procedure - function without return value
 
-function ObjTable (queryJson, opts, container) {
+function ObjTable (queryJson, opts, container, funcAroundInvoke1, funcAroundInvoke2) {
 		var that = this;//ref
 		this.filter = new GetSet("filter", null);//val
-		this.tableWidth = new GetSet("tableWidth", opts && opts.tableWidth ? opts.tableWidth : 1200);//val
+		this.tableWidth = new GetSet("tableWidth", opts && opts.tableWidth ? opts.tableWidth : 1200, null, ai1, ai2);//val
 		this.tableHeight = new GetSet("tableHeight", opts && opts.tableHeight ? opts.tableHeight : 400);//val
 		this.colsOpts = new GetSet("colsOpts", opts && opts.columns ? opts.columns : undefined);//ref
 		this.rowsColorOpts = new GetSet("rowsColorOpts", opts && opts.rowsColor ? opts.rowsColor : undefined);//ref
@@ -1031,7 +1031,17 @@ function ObjTable (queryJson, opts, container) {
 				that.cancelAll.get();
 			}
 		});
-		
+///AroundInvoke
+		function ai1(name, fname, params) {
+			//console.log("before " + name + " " + fname);
+			var ret = funcAroundInvoke1 ? funcAroundInvoke1(name, fname, params) : true;
+			return ret;
+		}
+		function ai2(name, fname, params) {
+			//console.log("before " + name + " " + fname);
+			var ret = funcAroundInvoke2 ? funcAroundInvoke2(name, fname, params) : true;
+			return ret;
+		}
 }
 
 function RowColorMarker(val) {

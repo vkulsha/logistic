@@ -139,6 +139,16 @@
 		//var opts = {tableWidth: 1200, tableHeight: tbHeight, columns: colsOpts, rowsColor: colors, /*cols2Button: [4,5]*/};
 		//var jsTable = new JsTable(query, opts, container);
 
+		function ai1(name, fname, params) {//AroundInvoke before
+			//console.log("before " + name + " " + fname);
+			return true;
+		}
+
+		function ai2(name, fname, params) {//AroundInvoke after
+			//console.log("before " + name + " " + fname);
+			return true;
+		}
+
 		var colsOpts = [
 			new ObjColumn({'id' : 0,  'name' : 'Заказы'}),
 			new ObjColumn({'id' : 1,  'name' : 'Клиент'}),
@@ -147,7 +157,7 @@
 			new ObjColumn({'id' : 4,  'name' : 'Организации', 'caption' : 'Исполнитель', 'parentCol' : 2}),
 		];
 		var opts = {tableWidth: 1200, tableHeight: tbHeight, columns: colsOpts, rowsColor: undefined};
-		var jsTable = new ObjTable(query, opts, container);
+		var jsTable = new ObjTable(query, opts, container, ai1, ai1);
 		
 		but1 = document.createElement("BUTTON");
 		but1.innerHTML = "Добавить заказ";
