@@ -8,10 +8,10 @@
 //call : call procedure once time
 //proc : procedure - function without return value
 
-function ObjTable (queryJson, opts, container) {
+function ObjTable (queryJson, opts, container, funcAroundInvoke1, funcAroundInvoke2) {
 		var that = this;//ref
 		this.filter = new GetSet("filter", null);//val
-		this.tableWidth = new GetSet("tableWidth", opts && opts.tableWidth ? opts.tableWidth : 1200);//val
+		this.tableWidth = new GetSet("tableWidth", opts && opts.tableWidth ? opts.tableWidth : 1200, null, ai1, ai2);//val
 		this.tableHeight = new GetSet("tableHeight", opts && opts.tableHeight ? opts.tableHeight : 400);//val
 		this.colsOpts = new GetSet("colsOpts", opts && opts.columns ? opts.columns : undefined);//ref
 		this.rowsColorOpts = new GetSet("rowsColorOpts", opts && opts.rowsColor ? opts.rowsColor : undefined);//ref
@@ -21,7 +21,11 @@ function ObjTable (queryJson, opts, container) {
 		this.cellDblClickFunc = new GetSet("cellDblClickFunc", opts && opts.cellDblClickFunc ? opts.cellDblClickFunc : undefined);//ref
 		this.cols2Button = new GetSet("cols2Button", opts && opts.cols2Button ? opts.cols2Button : []);//ref
 		this.cols2ButtonClick = new GetSet("cols2ButtonClick", opts && opts.cols2ButtonClick ? opts.cols2ButtonClick : undefined);//ref
-
+		this.refreshTableMarker = new GetSet("refreshTableMarker", undefined);//val
+		this.refreshTable = new GetSet("refreshTable", null, function(){//obj
+			that.refreshTableMarker.set(""+(new Date()));
+		});
+		
 		this.container = container;//ref
 		this.mainContainer = new GetSet("mainContainer", null, function(){//ref
 			var container = that.container;
@@ -74,7 +78,7 @@ function ObjTable (queryJson, opts, container) {
 					var cond = conds[i];
 					var field = cond.field.toLowerCase();
 					
-					if (col == field) {
+					if (col.toLowerCase() == field) {
 						succ = cmpOperator(cond.compareType, val, cond.value);
 					} else {
 						succ = false;
@@ -172,7 +176,7 @@ function ObjTable (queryJson, opts, container) {
 			return result;
 			
 		});
-		this.jsBody.listen([this.queryAll]);//listen
+		this.jsBody.listen([this.queryAll, this.refreshTableMarker]);//listen
 		this.rows = new GetSet("rows", null, function(){//ref
 			return that.jsBody.get(false)
 		});
@@ -443,18 +447,21 @@ function ObjTable (queryJson, opts, container) {
 			
 			var cellOnFocus = function(e){
 				//this.classList.add("jsTableSelectedCell");
+				if (isColorOpt) return;
 				that.selectedCell.set(this);
 				this.style.backgroundColor = rgb(255, 228, 138);
 				$(this.domRow).find("td").each(function(){
 					//this.classList.add("jsTableSelectedRow");
-					this.style.backgroundColor = rgb(255, 247, 217)
+					this.style.backgroundColor = rgb(255, 247, 217);
+					
 				});
 				//this.removeAttribute("readonly");
 
 			}
 			
 			var cellOnBlur = function(e){
-				color = "inherit";
+				color = "inherit"
+				if (isColorOpt) return;
 				this.style.backgroundColor = color;
 				//this.classList.remove("jsTableSelectedCell");
 				$(this.domRow).find("td").each(function(){
@@ -794,7 +801,13 @@ function ObjTable (queryJson, opts, container) {
 			
 			var filter = that.filter.get();
 			result.onclick = function(){
+				var filter = that.filter.get();
+				if (!filter) return;
+				filter.clearFilters.get();
 				location.reload();
+				//that.filter.get().clearFilters.get();
+				//that.queryWhere.set("");
+				//that.domButtonFilterDelShow.get();
 			}
 			return result;
 		});
@@ -1018,7 +1031,17 @@ function ObjTable (queryJson, opts, container) {
 				that.cancelAll.get();
 			}
 		});
-		
+///AroundInvoke
+		function ai1(name, fname, params) {
+			//console.log("before " + name + " " + fname);
+			var ret = funcAroundInvoke1 ? funcAroundInvoke1(name, fname, params) : true;
+			return ret;
+		}
+		function ai2(name, fname, params) {
+			//console.log("before " + name + " " + fname);
+			var ret = funcAroundInvoke2 ? funcAroundInvoke2(name, fname, params) : true;
+			return ret;
+		}
 }
 
 function RowColorMarker(val) {
@@ -1061,7 +1084,7 @@ function cmpOperator(t, val, pat){
 		( t == "!=" && val != pat ) ||
 		( t == "in" && ~JSON.parse(pat).indexOf(val) ) ||
 		( t == "not in" && JSON.parse(pat).indexOf(val) == -1 );
-	
+
 	return result;
 };
 

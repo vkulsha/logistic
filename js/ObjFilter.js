@@ -267,7 +267,7 @@ function ObjFilter(params) {
 			columnsFilter[i].userFilter = "";
 		}
 		that.userFilter.set("");
-		
+		that.panelFilterResult.set("");
 	});
 	
 }
