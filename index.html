@@ -23,40 +23,29 @@
 	var oids = [];
 	var key = $_GET("key", "#", location.hash);
 	var userId = 1;
-/*
-	var userKey = parseInt(key) || objectlink.gOrm("getObjectFromClass", [classes["Ключи доступа пользователей"] || 0, "undefined"]) || 0;
-	var userId = objectlink.gOrm("gAnd",[[userKey, classes["Пользователи"]]]);
-	if (userId && userId.length){
-		userId = userId[0][0];
-		var mainInterface = getMainInterfaceKey(userId);
-		
-		if (mainInterface) {
-			$(document).ready(function() {
-				var pLogin = gDom("pLogin");
-				pLogin.style.left = Math.round(windowWidth()/2) - 100 + "px";
-				pLogin.style.top = Math.round(windowHeight()/2) - 50 + "px";
-				var policy = showInterfaceElements(userId, mainInterface);
 
-				var bLogin = gDom("bLogin");
-				bLogin.onclick = function(){
-					var eUser = $("#eUser").val();
-					var password = document.fLogin.ePassword.value;
-				
-					var u = objectlink.gOrm("gAnd",[[classes["Пользователи"]],"id",false,"and n='"+eUser+"'"]);
-					var p = objectlink.gOrm("gAnd",[[classes["Пароли пользователей"]],"id",false,"and n='"+password+"'"]);
-					if (u && p && u.length && p.length){
-						var key = objectlink.gOrm("gAnd", [[u[0][0], p[0][0], classes["Ключи доступа пользователей"]]]);
-						if (key && key.length){
-							gDom("mainContainer").hidden = true;
-						}
-					}
-				}
-			});
-		}
-	}
-*/
 ////////////documentReady
 	$(document).ready(function(){
+		var pLogin = gDom("pLogin");
+		pLogin.style.left = Math.round(windowWidth()/2) - 100 + "px";
+		pLogin.style.top = Math.round(windowHeight()/2) - 50 + "px";
+
+		var bLogin = gDom("bLogin");
+		bLogin.onclick = function(){
+			var eUser = $("#eUser").val();
+			var password = document.fLogin.ePassword.value;
+			var u = objectlink.gOrm("gAnd",[[classes["Пользователи"]],"id",false,"and n='"+eUser+"'"]);
+			var p = objectlink.gOrm("gAnd",[[classes["Пароли пользователей"]],"id",false,"and n='"+password+"'"]);
+			if (u && p && u.length && p.length){
+				var key = objectlink.gOrm("gAnd", [[u[0][0], p[0][0], classes["Ключи доступа пользователей"]]]);
+				console.log(p[0][0]);
+				if (key && key.length){
+					gDom("mainContainer").hidden = true;
+				}
+			}
+		}
+
+
 		var pSearch = gDom("pSearch");
 
 		var pDop =  gDom("pDop");
@@ -130,8 +119,8 @@
 		}
 
 		var container = document.getElementsByClassName("jsTableContainer")[0];
-		var fields = ["Заказы","Клиент","Исполнитель","Сумма заказа","Организации"];
-		var sel = objectlink.gOrm("gTq2",[fields,[[4,2]],[],0]);
+		var fields = ["БС","БС адрес","БС вид работ","Заказы ПИР","Заказы СМР"];
+		var sel = objectlink.gOrm("gTq2",[fields,[],[],0]);
 		sel = "select "+decorateArr(fields, "`").join(",")+" from ("+sel+")x where 1=1 ";
 
 		var query = {
@@ -139,7 +128,7 @@
 			where:"",
 			order:""
 		};
-		var colors;/* = [
+		var colors = [
 			new RowColorMarker({
 				color: "#ffeeee",
 				conditions: [new FieldCondition({field: "Заказы ПИР", compareType: "!=", value: "", condType: "and"})]
@@ -148,42 +137,102 @@
 				color: "#eeffee",
 				conditions: [new FieldCondition({field: "Заказы СМР", compareType: "!=", value: "", condType: "and"})]
 			}),
-		];*/
+		];
 		var tbHeight = windowHeight() * (380/699);
 
 		var colsOpts = [
-			new Column({'id' : 0,  'name' : 'Заказы', 'caption' : 'Заказы', 'width' : 70}),
-			new Column({'id' : 1,  'name' : 'Клиент', 'caption' : 'Клиент', 'width' : 300}),
-			new Column({'id' : 2,  'name' : 'Исполнитель', 'caption' : 'Исполнитель', 'width' : 100}),
-			new Column({'id' : 3,  'name' : 'Сумма заказа', 'caption' : 'Сумма заказа', 'width' : 120}),
-			new Column({'id' : 4,  'name' : 'Организации', 'caption' : 'Организации', 'width' : 120}),
+			new Column({'id' : 0,  'name' : 'БС', 'caption' : 'БС', 'width' : 70}),
+			new Column({'id' : 1,  'name' : 'БС адрес', 'caption' : 'Адрес', 'width' : 300}),
+			new Column({'id' : 2,  'name' : 'БС вид работ', 'caption' : 'Вид работ', 'width' : 100}),
+			new Column({'id' : 3,  'name' : 'Заказы ПИР', 'caption' : 'ПИР (Р1)', 'width' : 120}),
+			new Column({'id' : 4,  'name' : 'Заказы СМР', 'caption' : 'СМР (Р2)', 'width' : 120}),
 		];
-		var opts = {tableWidth: 1200, tableHeight: tbHeight, columns: colsOpts, rowsColor: colors/*, cols2Button: [3,4]*/};
+		var opts = {tableWidth: 1200, tableHeight: tbHeight, columns: colsOpts, rowsColor: colors, cols2Button: [3,4]};
 		var jsTable = new JsTable(query, opts, container);
-		
+
 		but1 = document.createElement("BUTTON");
-		but1.innerHTML = "Добавить заказ";
+		but1.innerHTML = "Добавить БС";
 		but1.onclick = function(){
+			showModalHtml(getCard(["БС","БС номер","Стандарты БС","БС адрес","БС вид работ"],
+			["hidden","edit","checkbox","edit","combo"],[1,2],null,null, true), true);
 		}
 		addToTable(jsTable, but1);
-
-		but2 = document.createElement("BUTTON");
-		but2.innerHTML = "Редактировать Справочники";
-		but2.onclick = function(){
-		}
-		addToTable(jsTable, but2);
 		
 		function modalClose(refresh) {
 			modal.style.display = "none";
 			jsTable.refreshTable.get();
 		
+		}
+
+		function getCard(fields, fieldsT, parentValLinked, mainObjId, parentObjectId, bSaveVisible) {
+			var tb = cDom("TABLE");
+			var fields_ = [];
+			var f0;
+			
+			var values = mainObjId ? objectlink.gOrm("gT2",[fields, [],[],false,decorateArr(fields,"`"),"and `id_"+fields[0]+"`="+mainObjId+
+			" order by "+decorateArr(fields, "`d_", "` desc").join(",")+
+			" limit 1", true]) : [];
+			for (var i=0; i < fields.length; i++) {
+				var val = values && values.length ? values[0][i] : undefined;
+				var field = getFieldHtml(fields[i], fieldsT[i], val);
+				fields_.push(field);
+				if (i==0) {
+					field.linked = []
+					field.pid = parentObjectId;
+					field.linked0 = ( parentValLinked && parentValLinked.length && parentValLinked.indexOf(0) >= 0 );
+				} else if ( parentValLinked && parentValLinked.length && parentValLinked.indexOf(i) >= 0 ) {
+					fields_[0].linked.push(fields_[i])
+				};
+				tb.appendChild(field);
+			}
+
+			var tr = tb.appendChild(cDom("TR"));
+			tr.style.height = "10px";
+			var td = tr.appendChild(cDom("TD"));
+			var td = tr.appendChild(cDom("TD"));
+			
+			var tr = tb.appendChild(cDom("TR"));
+			var td = tr.appendChild(cDom("TD"));
+			var td = tr.appendChild(cDom("TD"));
+
+			tb.fields = fields_;
+			tb.parentObjectId = parentObjectId;
+			tb.mainObjId = mainObjId;
+			tb.funcSave = function(){
+				var fields = this.fields;
+				var pid;
+				for (var i=0; i < fields.length; i++) {
+					var field = fields[i];
+					if (!field.pid) field.pid = pid;
+					var oid = saveField(field);
+					if (field.ft == "hidden") {
+						pid = oid;
+						this.mainObjId = oid;
+						//console.log(oid);
+					}
+				}
+			};
+			
+			if (bSaveVisible) {
+				var but = td.appendChild(cDom("BUTTON"));
+				but.innerHTML = "Сохранить";
+				but.onclick = function(){
+					tb.funcSave();
+					modalClose(true);
+				};
+			}
+			
+			return tb;
 		}		
+		
 		var rows = jsTable.rows.get();
 		var cellDblClickFunc = function(){
 		};
 		jsTable.cellDblClickFunc.set(cellDblClickFunc);
 		
 		var bclick = function(that){
+			var zak_type = that.col == 3 ? "ПИР" : "СМР";
+			//var bsid = objectlink.gOrm("getObjectFromClass", [classes["БС"], jsTable.rows.get()[that.row][0]])[0][0];
 			var bsid = objectlink.gOrm("gO", [jsTable.rows.get()[that.row][0]], null, null, classes["БС"]);
 			var zak_id = objectlink.gOrm("gT2",[["Заказы "+zak_type,"БС"],[],[],false,
 				null,"and `id_БС` = "+bsid," order by `id_Заказы "+zak_type+"` desc limit 1"]);
@@ -208,6 +257,59 @@
 			td_zak.appendChild(card1);
 			cards.push(card1);
 
+			var tr_step = tb.appendChild(cDom("TR"));
+			tr_step.setAttribute("valign", "top");
+			var td1 = tr_step.appendChild(cDom("TD"));
+			var td2 = tr_step.appendChild(cDom("TD"));
+			var td3 = tr_step.appendChild(cDom("TD"));
+			
+			switch (zak_type) {
+				case "ПИР":
+					var zak = objectlink.gOrm("gT2",[["Заказы ПИР","ПСЭЗ","ЭЗ1","Р1"],[],[],false,null,"and `id_Заказы ПИР` = '"+zak_id+"'"]);
+					var psez = zak && zak.length ? zak[0][2] : "";
+					var ez1 = zak && zak.length ? zak[0][4] : "";
+					var r1 = zak && zak.length ? zak[0][6] : "";
+
+					var f = ["ПСЭЗ","Взят в работу","Запрос информации у стороннего оператора","Получение ответа от стороннего оператора",
+						"Выполнен","Передан в МТС на подписание","Получен из МТС подписанный","Передан во ФБУЗ","Готов"];
+					var card2 = createFieldsCard(f, ["hidden","date","date","date","date","date","date","date","date"], null, psez, card1.mainField);
+					td1.appendChild(card2);
+					cards.push(card2);
+
+					var f = ["ЭЗ1","Заявление подписано в МТС","Дата подачи в ЦГиЭ","Входящий номер в ЦГиЭ","Номер счета","Сумма","Статус счета","Получение"];
+					var card3 = createFieldsCard(f, ["hidden","date","date","edit","edit","edit","combo","date"], null, ez1, card1.mainField);
+					td2.appendChild(card3);
+					cards.push(card3);
+
+					var f = ["Р1","Заявление РПН подписано МТС","Номер заявления на размещение в РПН","Дата подачи в РПН","Получено из РПН","Передано в МТС"];
+					var card4 = createFieldsCard(f, ["hidden","date","edit","date","date","date"], null, r1, card1.mainField);
+					td3.appendChild(card4);
+					cards.push(card4);
+				break;
+				case "СМР":
+					var zak = objectlink.gOrm("gT2",[["Заказы СМР","Замеры","ЭЗ2","Р2"],[],[],false,null,"and `id_Заказы СМР` = '"+zak_id+"'"]);
+					var zam = zak && zak.length ? zak[0][2] : "";
+					var ez2 = zak && zak.length ? zak[0][4] : "";
+					var r2 = zak && zak.length ? zak[0][6] : "";
+
+					var f = ["Замеры","Заявление подписано в МТС","Подано на замеры в ЦГиЭ","Входящий номер ФБУЗ заявления","Номер счета","Сумма",
+						"Статус счета","Дата проведения"];
+					var card2 = createFieldsCard(f, ["hidden","date","date","edit","edit","edit","combo","date"], null, zam, card1.mainField);
+					td1.appendChild(card2);
+					cards.push(card2);
+
+					var f = ["ЭЗ2","Заявление подписано в МТС","Дата подачи в ЦГиЭ","Входящий номер в ЦГиЭ","Получение"];
+					var card3 = createFieldsCard(f, ["hidden","date","date","edit","date"], null, ez2, card1.mainField);
+					td2.appendChild(card3);
+					cards.push(card3);
+
+					var f = ["Р2","Заявление РПН подписано МТС","Дата подачи в РПН","Номер заявления на размещение в РПН","Получено из РПН","Передано в МТС"];
+					var card4 = createFieldsCard(f, ["hidden","date","date","edit","date","date"], null, r2, card1.mainField);
+					td3.appendChild(card4);
+					cards.push(card4);
+				break;
+			}	
+			
 			var tr_foot = tb.appendChild(cDom("TR"));
 			var td_foot = tr_foot.appendChild(cDom("TD"));
 			td_foot.setAttribute("colspan", 3);
@@ -222,6 +324,10 @@
 					var card = cards[i];
 					card.funcSave();
 				}
+
+				//for (var i=1; i < cards.length; i++) {
+				//	objectlink.gOrm("cL", [cards[i].mainObjId, cards[0].mainObjId, userId]);
+				//}
 				modalClose(true);
 			};
 			
@@ -276,7 +382,7 @@
 			<tr><td>Высота информационного окна</td><td><input type='edit' id='eDopHeight'/></td></tr>
 			</table>
 		</div>
-		<div style='position:absolute; left:0px; top:0px; width:100%; height:100%; z-index:1100000; background-color:rgba(0,0,0,0.7)' hidden id='mainContainer'>
+		<div style='position:absolute; left:0px; top:0px; width:100%; height:100%; z-index:1100000; background-color:rgba(0,0,0,0.7)'  id='mainContainer'>
 			<div id='pLogin' style='position:fixed; left:500px; top:400px; background-color:rgba(0,0,0,0.5)'>
 				<form name="fLogin" onsubmit='return false;' id='fLogin'>
 				<table cellpadding="5" cellspacing="5">

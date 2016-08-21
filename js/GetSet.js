@@ -1,15 +1,13 @@
 ﻿"use strict";
 
-function GetSet (name, val, func, funcAroundInvoke1, funcAroundInvoke2) {
+function GetSet (name, val, func) {
 	var sendList = [];
 
 	this.get = function(refresh) {//call inner function and get val
-		if (funcAroundInvoke1 && !funcAroundInvoke1(name, "get", [val])) return;
 		refresh = refresh == undefined ? true : refresh;
 		if (refresh) {
 			this.call();
 		}
-		if (funcAroundInvoke2 && !funcAroundInvoke2(name, "get", [val])) return;
 		return val;
 	}
 	
@@ -61,7 +59,6 @@ function GetSet (name, val, func, funcAroundInvoke1, funcAroundInvoke2) {
 	}
 	
 	this.set = function(val_, send, sendAnyWay) {//set val
-		if (funcAroundInvoke1 && !funcAroundInvoke1(name, "set", [val_])) return;
 		send = send == undefined ? true : send;
 		var isNull = val == null;
 		var notNull = val != null && val_ != null;
@@ -86,7 +83,6 @@ function GetSet (name, val, func, funcAroundInvoke1, funcAroundInvoke2) {
 		} else {
 //			if (this.name == "isDomPanelFilterVisible") { console.log(" set false (isNull || isSet1 || isSet2 || isSet3) "); }
 		}
-		if (funcAroundInvoke2 && !funcAroundInvoke2(name, "set", [val_])) return;
 	}
 	
 	this.send = function() {//send event from sendList

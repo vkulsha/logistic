@@ -136,7 +136,7 @@ function ObjFilter(params) {
 
 		pFilter.style.cssText = "resize:both; border: 1px solid #ccc; position:absolute; zIndex:1000; left:0; top: 0; height:300;";
 		pFilter.classList.add("highlight");
-		pSelectAll.innerHTML = "<table class='highlight'><tr><td><div></div></td></tr></table>";
+		pSelectAll.innerHTML = "<table class='highlight' style='width:100%'><tr><td><div></div></td></tr></table>";
 		pSelect.style.cssText = "height:100%; width:100%; overflow:auto";
 		pSelect.classList.add("highlight");
 

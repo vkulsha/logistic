@@ -24,13 +24,20 @@ class ObjectLink {
 			$n = $params[0];
 			$pid = isset($params[1]) ? $params[1] : 1;
 			$u = isset($params[2]) ? $params[2] : 1;
-			
-			$id = $this->sql->iT(["object", "n", "'$n'"]);  
 
-			$pid = isset($pid) ? $pid : 1;
 			if ($pid) {
-				$this->cL([$id, $pid, $u]);
+				$id = $this->gO([$n, null, null, $pid]);
 			}
+			
+			if (!$id) {
+				$id = $this->sql->iT(["object", "n", "'$n'"]);  
+				
+				if ($pid) {
+					$this->cL([$id, $pid, $u]);
+				}
+
+			}
+
 			$ret = $id;
 			
 		} catch (Exception $e) {
@@ -68,8 +75,9 @@ class ObjectLink {
 			$n = $params[0];
 			$isClass = isset($params[1]) && $params[1] ? "and id in (select o1 from link where o2 = 1) " : "";
 			$isLike = isset($params[2]) && $params[2] ? " and n like '%$n%' " : " and n = '$n' ";
-			
-			$ret = $this->sql->sT(["object", "id", "$isLike $isClass", "order by id", "limit 1"]);
+			//$inClass  = isset($params[3]) && $params[3] ? " and id in ( select o1 from link where o2 = ".$params[3]." and o1 not in (select o1 from link where o2 = 1) ) " : "";
+			$inClass  = isset($params[3]) && $params[3] ? " and id in ( select o1 from link where o2 = ".$params[3]." and o2 in (select o1 from link where o2 = 1) ) " : "";
+			$ret = $this->sql->sT(["object", "id", "$isLike $isClass $inClass", "order by id", "limit 1"]);
 			return $ret ? $ret[0][0] : null;
 			
 		} catch (Exception $e) {
@@ -709,8 +717,74 @@ class ObjectLink {
 		}
 	}
 
+	public function getObjectsAndLinks($params) {
+		try {
+			$arr = $params[0];//array of oid to need
+			$arr = join(",",$arr);
+			$obj = $this->sql->sT(["object", "id, n", "and id in ($arr)", " order by id"]);
+			$lnk = $this->sql->sT(["link", "o1, o2", "and o1 in ($arr) and o2 in ($arr) ", " order by id"]);
+			
+			return array($obj, $lnk);//array of [ [[oid, n]... ], [[o1, o2]... ] ]
+			
+		} catch (Exception $e){
+			print($e);
+			return null;
+		}
+	}
 
-
+	public function createObjectsAndLinks($params) {
+		try {
+			$n = $params[0];//temp object name
+			$arr = $params[1];//getObjectsAndLinks result
+			
+			$objArr = $arr[0];
+			$lnkArr = $arr[1];
+			
+			$cid = $this->cO([$n]);
+			
+			foreach ($objArr as &$obj) {
+				$id = &$obj[0];
+				$n = &$obj[1];
+				
+				$oid = $this->cO([$n, $id == 1 ? 1 : $cid]);
+				$obj[] = $oid;
+				$id = "old_$id";
+			}
+			
+			foreach ($lnkArr as &$lnk) {
+				$o1 = &$lnk[0];
+				$o2 = &$lnk[1];
+				$o1 = "old_$o1";
+				$o2 = "old_$o2";
+				
+				foreach ($objArr as &$obj) {
+					$idOld = $obj[0];
+					$idNew = $obj[2];
+					
+					if ($idOld == $o1) {
+						$o1 = $idNew;
+					}
+					
+					if ($idOld == $o2) {
+						$o2 = $idNew;
+					}
+				}
+			}
+			
+			foreach ($lnkArr as $lnk) {
+				$o1 = $lnk[0];
+				$o2 = $lnk[1];
+				if ($o1 == 1 && $o2 == 1) continue;
+				$this->cL([$o1, $o2]);
+			}
+			
+			return array($objArr, $lnkArr);
+			
+		} catch (Exception $e){
+			print($e);
+			return null;
+		}
+	}
 	
 	
 }
